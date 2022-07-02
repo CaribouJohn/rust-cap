@@ -3,7 +3,6 @@ use std::io::{Cursor, Read};
 use std::{
     fs::File,
     io::{self},
-    str,
 };
 
 #[derive(Debug, Clone)]
