@@ -14,7 +14,7 @@ use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 #[derive(Debug)]
 pub struct Header {
     pub start: u64,
-    blktype: u32,
+    pub blktype: u32,
     pub len: u32,
     section: bool,
     little_endian: bool,

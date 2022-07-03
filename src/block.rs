@@ -8,7 +8,7 @@ use std::{
 
 //fields are 32bit aligned
 pub struct RawBlock {
-    header: Header,
+    pub header: Header,
     data: Vec<u8>,
 }
 
