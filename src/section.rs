@@ -5,35 +5,9 @@ use std::{
     io::{self},
 };
 
-#[derive(Debug, Clone)]
-pub enum CapFileStatus {
-    Valid(bool), //false = LittleEndian
-    Invalid(String),
-}
-
-#[derive(Debug)]
-pub struct OptionValue {
-    optcode: u16,
-    optlen: u16,
-    optval: Vec<u8>,
-}
-
-impl OptionValue {
-    pub fn read_option<T: byteorder::ByteOrder>(&mut self, f: &mut File) -> io::Result<u16> {
-        self.optcode = f.read_u16::<T>()?;
-        self.optlen = f.read_u16::<T>()?;
-        if self.optcode != 0 {
-            f.take(self.optlen as u64).read_to_end(&mut self.optval)?;
-            //            println!("{:#?}", str::from_utf8(&self.optval))
-        }
-        Ok(self.optcode)
-    }
-}
-
 #[derive(Debug)]
 pub struct SectionBlockHeader {
     status: CapFileStatus,
-    blocktype: [u8; 4],
     rawblocklength: [u8; 4],
     byteordermagic: [u8; 4],
     blocklength: u32,
@@ -80,35 +54,18 @@ impl SectionBlockHeader {
 
         f.read_exact(&mut self.rawblocklength)?;
         f.read_exact(&mut self.byteordermagic)?;
-        if self.byteordermagic[0] == magic[0]
-            && self.byteordermagic[1] == magic[1]
-            && self.byteordermagic[2] == magic[2]
-            && self.byteordermagic[3] == magic[3]
-        {
-            self.status = CapFileStatus::Valid(false);
-        } else if self.byteordermagic[3] == magic[0]
-            && self.byteordermagic[1] == magic[2]
-            && self.byteordermagic[2] == magic[1]
-            && self.byteordermagic[3] == magic[0]
-        {
-            self.status = CapFileStatus::Valid(true);
-        } else {
-            self.status = CapFileStatus::Invalid("Byte order invalid".to_string());
-        }
 
         //set up rawlength
 
         match self.status {
             CapFileStatus::Valid(false) => {
-                println!("BigEndian");
                 return self.read_data::<BigEndian>(f);
             }
             CapFileStatus::Valid(true) => {
-                println!("LittleEndian");
                 return self.read_data::<LittleEndian>(f);
             }
             _ => {
-                println!("Invalid");
+                println!("Invalid file.");
             }
         }
 
