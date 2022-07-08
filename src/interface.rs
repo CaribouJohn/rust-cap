@@ -51,20 +51,23 @@ impl InterfaceBlock {
 
 impl Display for InterfaceBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "--------------iface--------------\n")?;
+
         write!(
             f,
-            "{:#010x?} ({} for {} bytes) (v{}.{}) max packet size = {}\n",
+            "{:#010x?} ({} for {} bytes) link type = {} max packet size = {}\n",
             self.header.blktype,
             self.header.filepos,
             self.header.blklen,
             self.linktype,
-            self.reserved,
             self.snaplen
         )?;
 
         for o in self.options.iter() {
             write!(f, "\t{}\n", o)?;
         }
+        write!(f, "--------------End iface--------------\n")?;
+
         Ok(())
     }
 }

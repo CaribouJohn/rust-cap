@@ -2,7 +2,9 @@ use byteorder::{BigEndian, ByteOrder, LittleEndian, ReadBytesExt};
 use std::fmt::Display;
 use std::io::{self, Cursor};
 
+use crate::interface::InterfaceBlock;
 use crate::option::OptionValue;
+use crate::packet::PacketBlock;
 use crate::rawblock::RawBlock;
 
 #[derive(Debug, Default)]
@@ -13,6 +15,8 @@ pub struct SectionBlock {
     sectionlength: i64,
     //options here
     options: Vec<OptionValue>,
+    pub iface: Option<InterfaceBlock>,
+    pub packets: Vec<PacketBlock>,
 }
 
 impl TryFrom<RawBlock> for SectionBlock {
@@ -51,6 +55,7 @@ impl SectionBlock {
 
 impl Display for SectionBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "--------------Section--------------\n")?;
         write!(
             f,
             "{:#010x?} ({} for {} bytes) (v{}.{}) optionlen = {}\n",
@@ -65,6 +70,16 @@ impl Display for SectionBlock {
         for o in self.options.iter() {
             write!(f, "\t{}\n", o)?;
         }
+
+        if let Some(i) = &self.iface {
+            write!(f, "{}\n", i)?;
+        }
+
+        for p in self.packets.iter() {
+            write!(f, "{}\n", p)?;
+        }
+        write!(f, "--------------End Section--------------\n")?;
+
         Ok(())
     }
 }

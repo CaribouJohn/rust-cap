@@ -41,7 +41,7 @@ impl TryFrom<RawBlock> for PacketBlock {
             bl_cursor.read_to_end(&mut buffer)?;
             if buffer.len() > 4 {
                 let o_cursor = &mut Cursor::new(buffer);
-                sb.extract_options::<BigEndian>(o_cursor);
+                sb.extract_options::<BigEndian>(o_cursor)?;
             }
         } else {
             sb.interfaceid = bl_cursor.read_u32::<LittleEndian>()?;
@@ -58,8 +58,9 @@ impl TryFrom<RawBlock> for PacketBlock {
             // read the whole file
             bl_cursor.read_to_end(&mut buffer)?;
             if buffer.len() > 4 {
+                println!("options {:?}", &buffer);
                 let o_cursor = &mut Cursor::new(buffer);
-                sb.extract_options::<LittleEndian>(o_cursor);
+                sb.extract_options::<LittleEndian>(o_cursor)?;
             }
         }
         Ok(sb)
@@ -67,19 +68,20 @@ impl TryFrom<RawBlock> for PacketBlock {
 }
 
 impl PacketBlock {
-    fn extract_options<T: ByteOrder>(&mut self, source: &mut Cursor<Vec<u8>>) {
-        let latestoption = 1;
+    fn extract_options<T: ByteOrder>(&mut self, source: &mut Cursor<Vec<u8>>) -> io::Result<()> {
+        let mut latestoption = 1;
         while latestoption != 0 {
             let mut o = OptionValue::default();
-            if let Ok(_latestoption) = o.read_option::<T>(source) {
-                self.options.push(o);
-            }
+            latestoption = o.read_option::<T>(source)?;
+            self.options.push(o);
         }
+        Ok(())
     }
 }
 
 impl Display for PacketBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "--------------Packet--------------\n")?;
         write!(
             f,
             "{:#010x?} ({} for {} bytes) iface={} ({}.{}) packet size = {} (of {})\n{}\n",
@@ -97,6 +99,8 @@ impl Display for PacketBlock {
         for o in self.options.iter() {
             write!(f, "\t{}\n", o)?;
         }
+        write!(f, "--------------End Packet--------------\n")?;
+
         Ok(())
     }
 }
