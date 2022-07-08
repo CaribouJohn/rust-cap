@@ -1,18 +1,13 @@
-pub mod interface;
-pub mod interfacestat;
-pub mod option;
-pub mod packet;
-pub mod rawblock;
-pub mod section;
+pub mod block;
 
 use std::fs::File;
 use std::io::{self};
 
-use crate::interface::InterfaceBlock;
-use crate::interfacestat::InterfaceStatBlock;
-use crate::packet::PacketBlock;
-use crate::rawblock::RawBlock;
-use crate::section::SectionBlock;
+use block::interface::InterfaceBlock;
+use block::interfacestat::InterfaceStatBlock;
+use block::packet::PacketBlock;
+use block::rawblock::RawBlock;
+use block::section::SectionBlock;
 
 const _SECTION_BLOCK_TYPE: u32 = 0x0A0D0D0A;
 const INTERFACE_BLOCK_TYPE: u32 = 0x1;

@@ -2,8 +2,8 @@ use byteorder::{BigEndian, ByteOrder, LittleEndian, ReadBytesExt};
 use std::fmt::Display;
 use std::io::{self, Cursor};
 
-use crate::option::OptionValue;
-use crate::rawblock::RawBlock;
+use crate::block::option::OptionValue;
+use crate::block::rawblock::RawBlock;
 
 #[derive(Debug, Default)]
 pub struct InterfaceStatBlock {

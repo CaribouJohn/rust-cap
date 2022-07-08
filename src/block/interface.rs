@@ -2,24 +2,20 @@ use byteorder::{BigEndian, ByteOrder, LittleEndian, ReadBytesExt};
 use std::fmt::Display;
 use std::io::{self, Cursor};
 
-use crate::interface::InterfaceBlock;
-use crate::option::OptionValue;
-use crate::packet::PacketBlock;
-use crate::rawblock::RawBlock;
+use crate::block::option::OptionValue;
+use crate::block::rawblock::RawBlock;
 
 #[derive(Debug, Default)]
-pub struct SectionBlock {
+pub struct InterfaceBlock {
     pub header: RawBlock,
-    minor: u16,
-    major: u16,
-    sectionlength: i64,
+    linktype: u16,
+    reserved: u16,
+    snaplen: u32,
     //options here
     options: Vec<OptionValue>,
-    pub iface: Option<InterfaceBlock>,
-    pub packets: Vec<PacketBlock>,
 }
 
-impl TryFrom<RawBlock> for SectionBlock {
+impl TryFrom<RawBlock> for InterfaceBlock {
     type Error = io::Error;
 
     fn try_from(value: RawBlock) -> Result<Self, Self::Error> {
@@ -27,21 +23,21 @@ impl TryFrom<RawBlock> for SectionBlock {
         sb.header = value.clone(); //have to clone
         let mut bl_cursor = Cursor::new(value.data);
         if let Some(true) = sb.header.endianness {
-            sb.major = bl_cursor.read_u16::<BigEndian>()?;
-            sb.minor = bl_cursor.read_u16::<BigEndian>()?;
-            sb.sectionlength = bl_cursor.read_i64::<BigEndian>()?;
+            sb.linktype = bl_cursor.read_u16::<BigEndian>()?;
+            sb.reserved = bl_cursor.read_u16::<BigEndian>()?;
+            sb.snaplen = bl_cursor.read_u32::<BigEndian>()?;
             sb.extract_options::<BigEndian>(&mut bl_cursor);
         } else {
-            sb.major = bl_cursor.read_u16::<LittleEndian>()?;
-            sb.minor = bl_cursor.read_u16::<LittleEndian>()?;
-            sb.sectionlength = bl_cursor.read_i64::<LittleEndian>()?;
+            sb.linktype = bl_cursor.read_u16::<LittleEndian>()?;
+            sb.reserved = bl_cursor.read_u16::<LittleEndian>()?;
+            sb.snaplen = bl_cursor.read_u32::<LittleEndian>()?;
             sb.extract_options::<LittleEndian>(&mut bl_cursor);
         }
         Ok(sb)
     }
 }
 
-impl SectionBlock {
+impl InterfaceBlock {
     fn extract_options<T: ByteOrder>(&mut self, source: &mut Cursor<Vec<u8>>) {
         let mut latestoption = 1;
         //println!("before options : {}", self);
@@ -53,32 +49,24 @@ impl SectionBlock {
     }
 }
 
-impl Display for SectionBlock {
+impl Display for InterfaceBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "--------------Section--------------\n")?;
+        write!(f, "--------------iface--------------\n")?;
+
         write!(
             f,
-            "{:#010x?} ({} for {} bytes) (v{}.{}) optionlen = {}\n",
+            "{:#010x?} ({} for {} bytes) link type = {} max packet size = {}\n",
             self.header.blktype,
             self.header.filepos,
             self.header.blklen,
-            self.major,
-            self.minor,
-            self.sectionlength
+            self.linktype,
+            self.snaplen
         )?;
 
         for o in self.options.iter() {
             write!(f, "\t{}\n", o)?;
         }
-
-        if let Some(i) = &self.iface {
-            write!(f, "{}\n", i)?;
-        }
-
-        for p in self.packets.iter() {
-            write!(f, "{}\n", p)?;
-        }
-        write!(f, "--------------End Section--------------\n")?;
+        write!(f, "--------------End iface--------------\n")?;
 
         Ok(())
     }
