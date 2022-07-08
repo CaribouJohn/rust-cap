@@ -1,13 +1,13 @@
 pub mod block;
 
 use std::fs::File;
-use std::io::{self};
+use std::io::{self, ErrorKind};
 
-use block::interface::InterfaceBlock;
-use block::interfacestat::InterfaceStatBlock;
-use block::packet::PacketBlock;
-use block::rawblock::RawBlock;
-use block::section::SectionBlock;
+// use block::interface::InterfaceBlock;
+// use block::interfacestat::InterfaceStatBlock;
+// use block::packet::PacketBlock;
+// use block::rawblock::RawBlock;
+// use block::section::SectionBlock;
 
 const _SECTION_BLOCK_TYPE: u32 = 0x0A0D0D0A;
 const INTERFACE_BLOCK_TYPE: u32 = 0x1;
@@ -25,8 +25,8 @@ fn main() -> io::Result<()> {
     // Read header - should be a section
     // to start assume 1 section, but can be 1+
     //
-    let rb = RawBlock::from_file(&mut f, None)?;
-    if let Ok(mut section) = SectionBlock::try_from(rb) {
+    let rb = block::rawblock::RawBlock::from_file(&mut f, None)?;
+    if let Ok(mut section) = block::section::SectionBlock::try_from(rb) {
         //
         // loop will read packets and block associated with the section.
         // the iface is for the section explicitly and the blocks contents
@@ -36,13 +36,13 @@ fn main() -> io::Result<()> {
         // println!("{}", section);
         // println!("-------------------------------------");
         loop {
-            let current = RawBlock::from_file(&mut f, section.header.endianness);
-            println!("{:?}", &current);
+            let current = block::rawblock::RawBlock::from_file(&mut f, section.header.endianness);
+            //println!("{:?}", &current);
             match current {
                 Ok(rb) => match rb.blktype {
-                    INTERFACE_BLOCK_TYPE => match InterfaceBlock::try_from(rb) {
+                    INTERFACE_BLOCK_TYPE => match block::interface::InterfaceBlock::try_from(rb) {
                         Ok(iface) => {
-                            println!("{}", iface);
+                            //println!("{}", iface);
                             section.iface = Some(iface)
                         }
                         Err(e) => {
@@ -50,18 +50,18 @@ fn main() -> io::Result<()> {
                             break;
                         }
                     },
-                    INTERFACE_STATS_BLOCK_TYPE => match InterfaceStatBlock::try_from(rb) {
-                        Ok(ifacestat) => {
-                            println!("{}", ifacestat);
+                    INTERFACE_STATS_BLOCK_TYPE => match block::interfacestat::InterfaceStatBlock::try_from(rb) {
+                        Ok(_ifacestat) => {
+                            //println!("{}", ifacestat);
                         }
                         Err(e) => {
                             println!(r#"failed to convert to Interface stats block: {}"#, e);
                             break;
                         }
                     },
-                    PACKET_BLOCK_TYPE => match PacketBlock::try_from(rb) {
+                    PACKET_BLOCK_TYPE => match block::packet::PacketBlock::try_from(rb) {
                         Ok(packet) => {
-                            println!("{}", packet);
+                            //println!("{}", packet);
                             section.packets.push(packet);
                         }
                         Err(e) => {
@@ -74,7 +74,10 @@ fn main() -> io::Result<()> {
                     }
                 },
                 Err(e) => {
-                    println!("{:#?}", e);
+                    match e.kind() {
+                        ErrorKind::UnexpectedEof => {},
+                        _ => println!("{:#?}", e) 
+                    }
                     break;
                 }
             }

@@ -58,7 +58,7 @@ impl TryFrom<RawBlock> for PacketBlock {
             // read the whole file
             bl_cursor.read_to_end(&mut buffer)?;
             if buffer.len() > 4 {
-                println!("options {:?}", &buffer);
+                //println!("options {:?}", &buffer);
                 let o_cursor = &mut Cursor::new(buffer);
                 sb.extract_options::<LittleEndian>(o_cursor)?;
             }

@@ -75,9 +75,10 @@ impl Display for SectionBlock {
             write!(f, "{}\n", i)?;
         }
 
-        for p in self.packets.iter() {
-            write!(f, "{}\n", p)?;
-        }
+        write!(f, "{} packets captured\n", self.packets.len())?;
+        // for p in self.packets.iter() {
+        //     write!(f, "{}\n", p)?;
+        // }
         write!(f, "--------------End Section--------------\n")?;
 
         Ok(())

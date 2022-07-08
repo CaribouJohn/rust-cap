@@ -8,6 +8,7 @@ Currently reads
 * InterfaceBlock `0x1`
 * (Enhanced) PacketBlock `0x6`
 * InterfaceStats `0x5`  
+* Options when specified in above block
 
 ## Todo
 * Need to decompose the packet 
